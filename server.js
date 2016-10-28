@@ -12,17 +12,16 @@ var transporter = transporter = nodemailer.createTransport('smtps://mymorningwea
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', function(request, response) {
-  response.sendFile(__dirname + '/public/index.html')
+  	response.sendFile(__dirname + '/public/index.html');
 });
 
-app.get('/startApp', function(request, response) {
-	scheduler(function(res) {
-		lastObservation = res;
-		response.format({
-			'text/plain': function(){
-			response.send(lastObservation);
-		  }
-		});
+app.use(function (request, response) {
+  	scheduler();
+
+  	response.format({
+		'text/plain': function(){
+			response.send('App Started');
+	  	}
 	});
 });
 
@@ -30,12 +29,13 @@ app.listen(PORT, function() {
   console.log("Server is up and running on port: " + PORT)
 });
 
-
-function scheduler(callback) {
-	schedule.scheduleJob({hour: 7, minute: 00, dayOfWeek: [0, 1, 2, 3, 4, 5, 6]}, sendWeather(callback));
+function scheduler() {
+	schedule.scheduleJob({hour: 7, minute: 00, dayOfWeek: [0, 1, 2, 3, 4, 5, 6]}, function() {
+		sendWeather();
+	});
 };
 
-function sendWeather(callback) {
+function sendWeather() {
 	var cbusWeather = 'http://api.wunderground.com/api/299474bc07889c93/conditions/q/OH/Columbus.json';
 
 	request(cbusWeather, function(error, response, data) {
@@ -72,9 +72,11 @@ function sendWeather(callback) {
 				    console.log('Message sent: ' + info.response);
 				});
 
+				return;
+
 			// Standard Email
 	    	} else {
-	    		var body = 'Weather for ' + location + '\n' +
+	    		var body = 'Weather for ' + location + '\n\n' +
 	    				'Current overall weather: ' + weather + '\n' +
 						'Current 🌡 is: ' + tempFarenheit + '\n' +
 						'Currently feels like: ' + feelsLike + '\n';
@@ -94,6 +96,8 @@ function sendWeather(callback) {
 				    console.log('Message sent: ' + info.response);
 				});
 
+				return;
+
 	    	}
 
 
@@ -101,6 +105,5 @@ function sendWeather(callback) {
 	    	console.log(error);
 	    }
 
-	    return callback(dataJSON.current_observation.observation_time);
 	});
 };

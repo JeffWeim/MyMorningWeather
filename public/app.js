@@ -2,17 +2,7 @@ var MorningWeather = function() {
     var self = this;
 
     self.init = function() {
-        self.eventListeners();
-    },
-
-    self.eventListeners = function() {
-        $('.start-button').on('click', function(e) {
-            e.preventDefault();
-
-            $(this).hide();
-
-            self.getData();
-        });
+        self.getData();
     },
 
     self.getData = function() {
