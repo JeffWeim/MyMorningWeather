@@ -8,7 +8,6 @@ var	request = require('request'),
 
 var transporter = transporter = nodemailer.createTransport('smtps://mymorningweather%40gmail.com:MyMorningWeather8899@smtp.gmail.com');
 
-
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', function(request, response) {
@@ -29,11 +28,16 @@ app.listen(PORT, function() {
   console.log("Server is up and running on port: " + PORT)
 });
 
-function scheduler() {
-	schedule.scheduleJob({hour: 7, minute: 00, dayOfWeek: [0, 1, 2, 3, 4, 5, 6]}, function() {
+var scheduler = once(function() {
+	var rule = new schedule.RecurrenceRule();
+		rule.dayOfWeek = [0, new schedule.Range(1, 6)];
+		rule.hour = 7;
+		rule.minute = 0;
+
+	schedule.scheduleJob(rule, function() {
 		sendWeather();
 	});
-};
+});
 
 function sendWeather() {
 	var cbusWeather = 'http://api.wunderground.com/api/299474bc07889c93/conditions/q/OH/Columbus.json';
@@ -49,6 +53,7 @@ function sendWeather() {
 	    	weather = dataJSON.current_observation.weather;
 
 	    if (!error && response.statusCode == 200) {
+	    	//
 	    	// Frost Alert Email
 	    	if (tempFarenheit <= 38 && precipLastHr >= 0.01) {
 			   var body = 'Weather for ' + location + '\n' +
@@ -74,6 +79,7 @@ function sendWeather() {
 
 				return;
 
+			//
 			// Standard Email
 	    	} else {
 	    		var body = 'Weather for ' + location + '\n\n' +
@@ -106,4 +112,17 @@ function sendWeather() {
 	    }
 
 	});
+};
+
+function once(fn, context) {
+	var result;
+
+	return function() {
+		if (fn) {
+			result = fn.apply(context || this, arguments);
+			fn = null;
+		}
+
+		return result;
+	};
 };
